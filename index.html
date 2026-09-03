@@ -353,17 +353,17 @@ async function loadStorageData(token) {
   const tenantName = await getTenantName(token);
 
   setMsg('Fetching Exchange mailbox storage…');
-  const exJson = await fetchReport(token, `/reports/getMailboxUsageStorage(period='${PERIOD}')?$format=json`);
+  const exBytes = await fetchStorageReport(token, 'getMailboxUsageStorage');
 
   setMsg('Fetching OneDrive storage…');
-  const odJson = await fetchReport(token, `/reports/getOneDriveUsageStorage(period='${PERIOD}')?$format=json`);
+  const odBytes = await fetchStorageReport(token, 'getOneDriveUsageStorage');
 
   setMsg('Fetching SharePoint storage…');
-  const spJson = await fetchReport(token, `/reports/getSharePointSiteUsageStorage(period='${PERIOD}')?$format=json`);
+  const spBytes = await fetchStorageReport(token, 'getSharePointSiteUsageStorage');
 
-  const exchangeBytes   = parseJsonLastValue(exJson, 'storageUsedInBytes');
-  const onedriveBytes   = parseJsonLastValue(odJson, 'storageUsedInBytes');
-  const sharepointBytes = parseJsonLastValue(spJson, 'storageUsedInBytes');
+  const exchangeBytes   = exBytes;
+  const onedriveBytes   = odBytes;
+  const sharepointBytes = spBytes;
   const totalBytes      = (exchangeBytes||0) + (onedriveBytes||0) + (sharepointBytes||0);
 
   storageData = { tenantName, fetchedAt: new Date().toISOString(),
@@ -382,22 +382,22 @@ async function getTenantName(token) {
   } catch { return ''; }
 }
 
-async function fetchReport(token, path) {
-  const res = await fetch(`${GRAPH}${path}`, {
+// Use beta endpoint which natively returns JSON for report data
+async function fetchStorageReport(token, reportName) {
+  const url = `https://graph.microsoft.com/beta/reports/${reportName}(period='${PERIOD}')?$format=json`;
+  const res = await fetch(url, {
     headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' }
   });
   if (!res.ok) throw new Error(`Graph API error (${res.status})`);
-  return res.json();
-}
-
-function parseJsonLastValue(data, field) {
-  // data is { value: [ { reportDate, storageUsedInBytes, ... }, ... ] }
+  const data = await res.json();
   const rows = data?.value;
   if (!rows || rows.length === 0) return null;
-  // Last entry is most recent
-  const last = rows[rows.length - 1];
-  const val  = last[field];
-  return val !== undefined ? parseInt(val, 10) : null;
+  // Find most recent row by reportDate
+  rows.sort((a, b) => new Date(b.reportDate) - new Date(a.reportDate));
+  const latest = rows[0];
+  // Field name varies by report
+  const val = latest.storageUsedInBytes ?? latest['Storage Used (Byte)'] ?? null;
+  return val !== null ? parseInt(val, 10) : null;
 }
 
 // ── Render ────────────────────────────────────────────────
