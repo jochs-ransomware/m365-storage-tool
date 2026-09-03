@@ -353,17 +353,17 @@ async function loadStorageData(token) {
   const tenantName = await getTenantName(token);
 
   setMsg('Fetching Exchange mailbox storage…');
-  const exCsv = await fetchReport(token, `/reports/getMailboxUsageStorage(period='${PERIOD}')`);
+  const exJson = await fetchReport(token, `/reports/getMailboxUsageStorage(period='${PERIOD}')?$format=json`);
 
   setMsg('Fetching OneDrive storage…');
-  const odCsv = await fetchReport(token, `/reports/getOneDriveUsageStorage(period='${PERIOD}')`);
+  const odJson = await fetchReport(token, `/reports/getOneDriveUsageStorage(period='${PERIOD}')?$format=json`);
 
   setMsg('Fetching SharePoint storage…');
-  const spCsv = await fetchReport(token, `/reports/getSharePointSiteUsageStorage(period='${PERIOD}')`);
+  const spJson = await fetchReport(token, `/reports/getSharePointSiteUsageStorage(period='${PERIOD}')?$format=json`);
 
-  const exchangeBytes   = parseCsvLastValue(exCsv, 1);
-  const onedriveBytes   = parseCsvLastValue(odCsv, 1);
-  const sharepointBytes = parseCsvLastValue(spCsv, 1);
+  const exchangeBytes   = parseJsonLastValue(exJson, 'storageUsedInBytes');
+  const onedriveBytes   = parseJsonLastValue(odJson, 'storageUsedInBytes');
+  const sharepointBytes = parseJsonLastValue(spJson, 'storageUsedInBytes');
   const totalBytes      = (exchangeBytes||0) + (onedriveBytes||0) + (sharepointBytes||0);
 
   storageData = { tenantName, fetchedAt: new Date().toISOString(),
@@ -383,16 +383,21 @@ async function getTenantName(token) {
 }
 
 async function fetchReport(token, path) {
-  const res = await fetch(`${GRAPH}${path}`, { headers: { Authorization: `Bearer ${token}` } });
+  const res = await fetch(`${GRAPH}${path}`, {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' }
+  });
   if (!res.ok) throw new Error(`Graph API error (${res.status})`);
-  return res.text();
+  return res.json();
 }
 
-function parseCsvLastValue(csv, colIndex) {
-  const lines = csv.trim().split('\n').filter(l => l.trim());
-  if (lines.length < 2) return null;
-  const val = lines[lines.length-1].split(',')[colIndex];
-  return val ? parseInt(val.replace(/"/g,''), 10) : null;
+function parseJsonLastValue(data, field) {
+  // data is { value: [ { reportDate, storageUsedInBytes, ... }, ... ] }
+  const rows = data?.value;
+  if (!rows || rows.length === 0) return null;
+  // Last entry is most recent
+  const last = rows[rows.length - 1];
+  const val  = last[field];
+  return val !== undefined ? parseInt(val, 10) : null;
 }
 
 // ── Render ────────────────────────────────────────────────
