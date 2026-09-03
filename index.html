@@ -382,22 +382,38 @@ async function getTenantName(token) {
   } catch { return ''; }
 }
 
-// Use beta endpoint which natively returns JSON for report data
+// Fetch storage using JSON-native Graph report endpoints
 async function fetchStorageReport(token, reportName) {
-  const url = `https://graph.microsoft.com/beta/reports/${reportName}(period='${PERIOD}')?$format=json`;
-  const res = await fetch(url, {
-    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' }
-  });
-  if (!res.ok) throw new Error(`Graph API error (${res.status})`);
-  const data = await res.json();
-  const rows = data?.value;
-  if (!rows || rows.length === 0) return null;
-  // Find most recent row by reportDate
-  rows.sort((a, b) => new Date(b.reportDate) - new Date(a.reportDate));
-  const latest = rows[0];
-  // Field name varies by report
-  const val = latest.storageUsedInBytes ?? latest['Storage Used (Byte)'] ?? null;
-  return val !== null ? parseInt(val, 10) : null;
+  // These endpoints return JSON directly without redirecting
+  const endpoints = {
+    'getMailboxUsageStorage':        { url: `${GRAPH}/reports/getMailboxUsageDetail(period='${PERIOD}')`, field: 'storageUsedInBytes' },
+    'getOneDriveUsageStorage':       { url: `${GRAPH}/reports/getOneDriveUsageAccountDetail(period='${PERIOD}')`, field: 'storageUsedInBytes' },
+    'getSharePointSiteUsageStorage': { url: `${GRAPH}/reports/getSharePointSiteUsageDetail(period='${PERIOD}')`, field: 'storageUsedInBytes' }
+  };
+
+  const ep = endpoints[reportName];
+  let nextUrl = ep.url;
+  let total = 0;
+  let found = false;
+
+  // Page through all results and sum up storage
+  while (nextUrl) {
+    const res = await fetch(nextUrl, {
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' }
+    });
+    if (!res.ok) throw new Error(`Graph API error (${res.status})`);
+    const data = await res.json();
+    const rows = data?.value || [];
+    for (const row of rows) {
+      const val = row[ep.field];
+      if (val !== undefined && val !== null) {
+        total += parseInt(val, 10);
+        found = true;
+      }
+    }
+    nextUrl = data['@odata.nextLink'] || null;
+  }
+  return found ? total : null;
 }
 
 // ── Render ────────────────────────────────────────────────
