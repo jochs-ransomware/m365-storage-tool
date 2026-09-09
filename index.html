@@ -122,11 +122,67 @@
   footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--line); text-align: center; font-size: 12px; color: var(--ink-3); }
   footer strong { color: var(--k-purple); }
 
+  /* ── Security tooltip ── */
+  .security-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12px; font-weight: 500; color: #166534;
+    background: #dcfce7; border: 1px solid #bbf7d0;
+    border-radius: 20px; padding: 5px 12px;
+    cursor: help; position: relative;
+    margin-top: 16px;
+    user-select: none;
+  }
+  .security-badge svg { width: 13px; height: 13px; flex-shrink: 0; }
+  .security-badge .q-mark {
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #166534; color: white;
+    font-size: 11px; font-weight: 700;
+    display: inline-flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .tooltip-box {
+    display: none;
+    position: absolute;
+    bottom: calc(100% + 10px);
+    left: 50%; transform: translateX(-50%);
+    width: 340px;
+    background: #1a1d27;
+    color: #e2e8f0;
+    border-radius: 12px;
+    padding: 18px 20px;
+    font-size: 12.5px;
+    line-height: 1.6;
+    text-align: left;
+    z-index: 100;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    cursor: default;
+  }
+  .tooltip-box::after {
+    content: '';
+    position: absolute;
+    top: 100%; left: 50%; transform: translateX(-50%);
+    border: 7px solid transparent;
+    border-top-color: #1a1d27;
+  }
+  .tooltip-box h4 {
+    font-size: 13px; font-weight: 600; color: #a855f7;
+    margin-bottom: 10px; display: flex; align-items: center; gap: 6px;
+  }
+  .tooltip-box h4 svg { width: 14px; height: 14px; }
+  .tooltip-section { margin-bottom: 12px; }
+  .tooltip-section:last-child { margin-bottom: 0; }
+  .tooltip-section strong { color: #c4b5fd; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 3px; }
+  .tooltip-section p { color: #94a3b8; font-size: 12px; margin: 0; }
+  .security-badge:hover .tooltip-box,
+  .security-badge:focus .tooltip-box { display: block; }
+
   @media (max-width: 580px) {
     .header-bar { flex-direction: column; align-items: flex-start; gap: 10px; }
     .panel { padding: 28px 20px; }
     .storage-grid { grid-template-columns: 1fr 1fr; }
     .total-card .big { font-size: 30px; }
+    .tooltip-box { width: 280px; left: auto; right: 0; transform: none; }
+    .tooltip-box::after { left: auto; right: 20px; transform: none; }
   }
 </style>
 </head>
@@ -173,6 +229,40 @@
       <div class="notice notice-info">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6.5"/><path d="M8 7v5M8 5v.5"/></svg>
         <span>Read-only access only — no changes are made to your tenant. You may be asked to approve permissions on first sign-in.</span>
+      </div>
+
+      <div style="display:flex;justify-content:center;">
+        <div class="security-badge" tabindex="0">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M8 2L3 4.5v4c0 3 2.5 5 5 5.5 2.5-.5 5-2.5 5-5.5v-4L8 2z"/><path d="M6 8l1.5 1.5L10 6"/></svg>
+          Your data is never stored or shared
+          <span class="q-mark">?</span>
+          <div class="tooltip-box">
+            <h4>
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M8 2L3 4.5v4c0 3 2.5 5 5 5.5 2.5-.5 5-2.5 5-5.5v-4L8 2z"/></svg>
+              Security &amp; Privacy
+            </h4>
+            <div class="tooltip-section">
+              <strong>Credentials</strong>
+              <p>No passwords are ever entered here. Sign-in happens entirely on Microsoft's own login page. This tool only ever sees a temporary access token.</p>
+            </div>
+            <div class="tooltip-section">
+              <strong>Tokens</strong>
+              <p>OAuth tokens are generated fresh each session, held only in browser memory, and discarded immediately after use. They expire after 1 hour regardless.</p>
+            </div>
+            <div class="tooltip-section">
+              <strong>Storage data</strong>
+              <p>Your numbers are displayed on screen and held in memory only. Nothing is written to a database, disk, or any third-party service.</p>
+            </div>
+            <div class="tooltip-section">
+              <strong>Customer info</strong>
+              <p>Tenant names and storage figures are never logged or stored. The backend is stateless by design — no database exists.</p>
+            </div>
+            <div class="tooltip-section">
+              <strong>In short</strong>
+              <p>Each session is completely isolated. Sign in → fetch data → display it → done.</p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
