@@ -231,6 +231,13 @@
         <span>Read-only access only — no changes are made to your tenant. You may be asked to approve permissions on first sign-in.</span>
       </div>
 
+      <div style="display:flex;justify-content:center;margin-top:18px;">
+        <a href="https://admin.microsoft.com/Adminportal/Home#/reportsUsage/MailboxUsage" target="_blank" rel="noopener noreferrer" style="font-size:13px;color:var(--ink-3);text-decoration:none;display:inline-flex;align-items:center;gap:5px;padding:6px 0;border-bottom:1px dashed var(--line);transition:color 0.15s;">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M7 3H3a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1V9"/><path d="M10 2h4v4"/><path d="M14 2 8 8"/></svg>
+          I'll find it myself
+        </a>
+      </div>
+
       <div style="display:flex;justify-content:center;">
         <div class="security-badge" tabindex="0">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M8 2L3 4.5v4c0 3 2.5 5 5 5.5 2.5-.5 5-2.5 5-5.5v-4L8 2z"/><path d="M6 8l1.5 1.5L10 6"/></svg>
@@ -477,7 +484,7 @@ function formatBytes(bytes) {
 
 function renderResults(d) {
   document.getElementById('tenant-name-badge').textContent = d.tenantName ? `🏢 ${d.tenantName}` : 'Your tenant';
-  document.getElementById('report-meta').textContent = `Fetched ${new Date(d.fetchedAt).toLocaleString()} · Last 30 days`;
+  document.getElementById('report-meta').textContent = `Fetched ${new Date(d.fetchedAt).toLocaleString()} · Current snapshot`;
   const tf = formatBytes(d.total);
   document.getElementById('total-display').innerHTML = `${tf.value} <span class="unit">${tf.unit}</span>`;
   function fillCard(pfx, bytes) {
